@@ -10,9 +10,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     username = models.CharField(max_length=25, unique=True)
     bio = models.TextField()
-    profile_picture = models.ImageField(
-        upload_to=upload_image_file_path, blank=True, null=True
-    )
+    profile_picture = models.ImageField(upload_to=upload_image_file_path)
     followers = models.ManyToManyField(
         "UserProfile", related_name="followings", blank=True
     )
