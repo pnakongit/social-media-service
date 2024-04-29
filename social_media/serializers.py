@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from social_media.models import UserProfile
+from social_media.models import UserProfile, Post
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -43,3 +43,20 @@ class UserProfileSortSerializer(serializers.ModelSerializer):
         fields = ["id", "username"]
 
         read_only_fields = ["id", "username"]
+
+
+class PostSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user_profile.username", read_only=True)
+    count_likes = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ["id", "username", "content", "image", "count_likes"]
+
+
+class PostCreateUpdateSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
+
+    class Meta:
+        model = Post
+        fields = ["id", "content", "image"]

@@ -4,17 +4,20 @@ from django.db.models import QuerySet, Count, Q
 from rest_framework import viewsets, status, mixins, generics
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
-from social_media.models import UserProfile
-from social_media.permissions import HasUserProfile
+from social_media.models import UserProfile, Post
+from social_media.permissions import HasUserProfile, IsObjectOwner
 
 from social_media.serializers import (
     UserProfileSerializer,
     UserProfileCreateSerializer,
     UserProfileUpdateSerializer,
     UserProfileSortSerializer,
+    PostSerializer,
+    PostCreateUpdateSerializer,
 )
 
 
@@ -111,3 +114,66 @@ class FollowingApiView(generics.ListAPIView):
     def get_queryset(self) -> QuerySet:
         follower_qs = self.request.user.profile.followings.all()
         return follower_qs
+
+
+class PostViewSet(viewsets.ModelViewSet):
+    serializer_class = PostSerializer
+    permission_classes = [HasUserProfile, IsObjectOwner]
+
+    def get_serializer_class(self) -> Type[Serializer]:
+        if self.action in ["create", "update", "partial_update"]:
+            return PostCreateUpdateSerializer
+
+        return super().get_serializer_class()
+
+    def get_queryset(self) -> QuerySet:
+        post_qs = Post.objects.filter(
+            Q(user_profile__user=self.request.user)
+            | Q(user_profile__followers=self.request.user.profile)
+        )
+        if self.request.method == "GET":
+            post_qs = (
+                post_qs.prefetch_related("user_profile", "likes")
+                .annotate(count_likes=Count("likes"))
+                .order_by("-id")
+            )
+
+        return post_qs
+
+    def perform_create(self, serializer: Serializer) -> Post:
+        return serializer.save(user_profile=self.request.user.profile)
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="like",
+        url_name="like",
+        permission_classes=[HasUserProfile],
+    )
+    def like(self, request: Request, pk: int = None) -> Response:
+        user_profile = self.get_object()
+        user_profile.likes.add(request.user.profile)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="unlike",
+        url_name="unlike",
+        permission_classes=[HasUserProfile],
+    )
+    def unlike(self, request: Request, pk: int = None) -> Response:
+        user_profile = self.get_object()
+        user_profile.likes.remove(request.user.profile)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=["GET"],
+        detail=False,
+        url_path="liked_post",
+        url_name="liked_post",
+    )
+    def liked_post(self, request: Request) -> Response:
+        post_qs = self.get_queryset().filter(likes=request.user.profile)
+        serializer = self.get_serializer(post_qs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

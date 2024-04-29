@@ -6,10 +6,12 @@ from social_media.views import (
     UserManageApiView,
     FollowerApiView,
     FollowingApiView,
+    PostViewSet,
 )
 
 router = routers.DefaultRouter()
 router.register("user-profiles", UserProfileViewSet, basename="user_profiles")
+router.register("posts", PostViewSet, basename="post")
 
 urlpatterns = [
     path("user-profiles/me/", UserManageApiView.as_view(), name="manage_user_profile"),

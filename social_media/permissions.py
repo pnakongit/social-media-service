@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 class HasUserProfile(BasePermission):
@@ -8,3 +8,10 @@ class HasUserProfile(BasePermission):
         return bool(
             request.user and request.user.is_authenticated and request.user.has_profile
         )
+
+
+class IsObjectOwner(BasePermission):
+    message = "You are not an object owner"
+
+    def has_object_permission(self, request, view, obj) -> bool:
+        return request.method in SAFE_METHODS or obj.user_profile.user == request.user
