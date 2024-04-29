@@ -1,6 +1,6 @@
 from typing import Type
 
-from django.db.models import QuerySet, Count
+from django.db.models import QuerySet, Count, Q
 from rest_framework import viewsets, status, mixins, generics
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -76,8 +76,7 @@ class UserProfileViewSet(
     def unfollow(self, request, pk=None) -> Response:
         user_profile = self.get_object()
         follower_profile = request.user.profile
-
-        user_profile.followings.remove(follower_profile)
+        user_profile.followers.remove(follower_profile)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
