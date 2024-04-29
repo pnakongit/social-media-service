@@ -3,12 +3,13 @@ from typing import Type
 from django.db.models import QuerySet, Count, Q
 from rest_framework import viewsets, status, mixins, generics
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
-from social_media.models import UserProfile, Post
+from social_media.models import UserProfile, Post, Comment
 from social_media.permissions import HasUserProfile, IsObjectOwner
 
 from social_media.serializers import (
@@ -18,6 +19,8 @@ from social_media.serializers import (
     UserProfileSortSerializer,
     PostSerializer,
     PostCreateUpdateSerializer,
+    CommentSerializer,
+    CommentCreateSerializer,
 )
 
 
@@ -177,3 +180,29 @@ class PostViewSet(viewsets.ModelViewSet):
         post_qs = self.get_queryset().filter(likes=request.user.profile)
         serializer = self.get_serializer(post_qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    permission_classes = [HasUserProfile, IsObjectOwner]
+
+    def get_serializer_class(self) -> Type[Serializer]:
+        if self.action in ["create", "update", "partial_update"]:
+            return CommentCreateSerializer
+        return CommentSerializer
+
+    def get_post(self) -> Post:
+        post_qs = Post.objects.filter(
+            Q(user_profile__user=self.request.user)
+            | Q(user_profile__followers=self.request.user.profile)
+        )
+        return get_object_or_404(post_qs, pk=self.kwargs.get("post_pk"))
+
+    def get_queryset(self) -> QuerySet:
+        return Comment.objects.filter(post=self.get_post())
+
+    def perform_create(self, serializer: Serializer) -> None:
+        serializer.save(
+            user_profile=self.request.user.profile,
+            post=self.get_post(),
+        )

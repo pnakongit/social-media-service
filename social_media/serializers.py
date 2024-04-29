@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from social_media.models import UserProfile, Post
+from social_media.models import UserProfile, Post, Comment
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -60,3 +60,18 @@ class PostCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ["id", "content", "image"]
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user_profile.username", read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ["id", "username", "content", "created_at"]
+
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = ["id", "content"]
