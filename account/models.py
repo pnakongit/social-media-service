@@ -16,3 +16,12 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return f"{self.pk} {self.email}"
+
+    @property
+    def has_profile(self) -> bool:
+        try:
+            self.profile
+        except self.__class__.profile.RelatedObjectDoesNotExist:
+            return False
+
+        return True
