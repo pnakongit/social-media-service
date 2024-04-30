@@ -1,7 +1,7 @@
 from django.urls import path
-from knox.views import LogoutView, LogoutAllView
+from knox.views import LogoutAllView
 
-from account.views import UserCreateApiView, LoginApiView
+from account.views import UserCreateApiView, LoginApiView, LogoutView
 
 urlpatterns = [
     path("register/", UserCreateApiView.as_view(), name="user_create"),
