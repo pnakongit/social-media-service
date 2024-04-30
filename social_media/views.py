@@ -9,6 +9,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 
+from social_media.filters import HashtagSearchBackend
 from social_media.models import UserProfile, Post, Comment
 from social_media.permissions import HasUserProfile, IsObjectOwner
 
@@ -122,6 +123,7 @@ class FollowingApiView(generics.ListAPIView):
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [HasUserProfile, IsObjectOwner]
+    filter_backends = [HashtagSearchBackend]
 
     def get_serializer_class(self) -> Type[Serializer]:
         if self.action in ["create", "update", "partial_update"]:
