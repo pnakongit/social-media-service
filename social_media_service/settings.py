@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "knox",
     "drf_spectacular",
+    "django_celery_beat",
     "account",
     "social_media",
 ]
@@ -143,4 +144,15 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Simple social media API service",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+}
+
+
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+
+
+CELERY_BEAT_SCHEDULE = {
+    "publish_post-every-minutes": {
+        "task": "social_media.tasks.publish_postponed_posts",
+        "schedule": 60.0,
+    },
 }

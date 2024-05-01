@@ -1,6 +1,9 @@
+import json
+import uuid
 from typing import Type, Any
 
 from django.db.models import QuerySet, Count, Q
+from django_celery_beat.models import ClockedSchedule, PeriodicTask
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, status, mixins, generics
@@ -24,6 +27,7 @@ from social_media.serializers import (
     PostCreateUpdateSerializer,
     CommentSerializer,
     CommentCreateSerializer,
+    PostponedPostCreateSerializer,
 )
 
 
@@ -193,7 +197,6 @@ class PostViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self) -> Type[Serializer]:
         if self.action in ["create", "update", "partial_update"]:
             return PostCreateUpdateSerializer
-
         return super().get_serializer_class()
 
     def get_queryset(self) -> QuerySet:
@@ -300,6 +303,14 @@ class PostViewSet(viewsets.ModelViewSet):
         post_qs = self.get_queryset().filter(likes=request.user.profile)
         serializer = self.get_serializer(post_qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PostponedPostCreateApiView(generics.CreateAPIView):
+    serializer_class = PostponedPostCreateSerializer
+    permission_classes = [HasUserProfile]
+
+    def perform_create(self, serializer: Serializer) -> None:
+        serializer.save(user_profile=self.request.user.profile)
 
 
 class CommentViewSet(viewsets.ModelViewSet):

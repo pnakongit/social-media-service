@@ -8,6 +8,7 @@ from social_media.views import (
     FollowingApiView,
     PostViewSet,
     CommentViewSet,
+    PostponedPostCreateApiView,
 )
 
 router = routers.DefaultRouter()
@@ -20,7 +21,9 @@ post_router.register("comments", CommentViewSet, basename="post_comment")
 urlpatterns = (
     [
         path(
-            "user-profiles/me/", UserManageApiView.as_view(), name="manage_user_profile"
+            "user-profiles/me/",
+            UserManageApiView.as_view(),
+            name="manage_user_profile",
         ),
         path(
             "user-profiles/me/followers/",
@@ -31,6 +34,11 @@ urlpatterns = (
             "user-profiles/me/followings/",
             FollowingApiView.as_view(),
             name="manage_user_profile_followings",
+        ),
+        path(
+            "posts/create-postponed-post/",
+            PostponedPostCreateApiView.as_view(),
+            name="create_postponed_post",
         ),
     ]
     + router.urls

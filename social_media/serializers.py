@@ -1,6 +1,7 @@
+from django.utils import timezone
 from rest_framework import serializers
 
-from social_media.models import UserProfile, Post, Comment
+from social_media.models import UserProfile, Post, Comment, PostponedPost
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -75,3 +76,11 @@ class CommentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ["id", "content"]
+
+
+class PostponedPostCreateSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
+
+    class Meta:
+        model = PostponedPost
+        fields = ["id", "content", "image", "postponed_at"]
