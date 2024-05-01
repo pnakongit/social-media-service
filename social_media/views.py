@@ -312,6 +312,10 @@ class PostponedPostCreateApiView(generics.CreateAPIView):
     def perform_create(self, serializer: Serializer) -> None:
         serializer.save(user_profile=self.request.user.profile)
 
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Create a postponed post of user profile"""
+        return super().post(request, *args, **kwargs)
+
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
