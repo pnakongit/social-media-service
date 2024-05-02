@@ -25,6 +25,7 @@ from social_media.serializers import (
     CommentSerializer,
     CommentCreateSerializer,
     PostponedPostCreateSerializer,
+    FollowSerializer,
 )
 
 
@@ -95,17 +96,22 @@ class UserProfileViewSet(
         methods=["POST"],
         url_path="follow",
         url_name="follow",
+        serializer_class=FollowSerializer,
         permission_classes=[HasUserProfile],
     )
     def follow(self, request, pk=None) -> Response:
         user_profile = self.get_object()
         follower_profile = request.user.profile
 
-        if user_profile == follower_profile:
-            return Response(
-                {"detail": "You cannot follow yourself"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer_context = {
+            "user_profile": user_profile,
+            "follower_profile": follower_profile,
+        }
+
+        serializer = self.get_serializer(data={}, context=serializer_context)
+        serializer.is_valid(raise_exception=True)
+
+        user_profile.followers.add(follower_profile)
 
         user_profile.followers.add(follower_profile)
         return Response(status=status.HTTP_204_NO_CONTENT)

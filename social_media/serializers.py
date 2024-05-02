@@ -57,6 +57,17 @@ class UserProfileShortSerializer(serializers.ModelSerializer):
         fields = ["id", "username"]
 
 
+class FollowSerializer(serializers.Serializer):
+    def validate(self, data: dict) -> dict:
+        user_profile = self.context["user_profile"]
+        follower_profile = self.context["follower_profile"]
+
+        if user_profile == follower_profile:
+            raise serializers.ValidationError("You cannot follow yourself")
+
+        return data
+
+
 class PostSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         source="user_profile.user.username", read_only=True
