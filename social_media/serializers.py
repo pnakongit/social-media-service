@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from social_media.models import UserProfile, Post, Comment, PostponedPost
 
@@ -31,7 +33,14 @@ class UserProfileCreateSerializer(serializers.ModelSerializer):
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source="user.username")
+    username = serializers.CharField(
+        source="user.username",
+        max_length=150,
+        validators=[
+            UnicodeUsernameValidator(),
+            UniqueValidator(queryset=get_user_model().objects.all()),
+        ],
+    )
     profile_picture = serializers.ImageField(required=False)
 
     class Meta:
