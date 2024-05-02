@@ -18,7 +18,7 @@ class UserProfile(models.Model):
         ordering = ("user",)
 
     def __str__(self) -> str:
-        return self.username
+        return f"User profile ID {self.pk}"
 
 
 class Post(models.Model):
