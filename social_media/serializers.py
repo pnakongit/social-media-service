@@ -1,4 +1,5 @@
-from django.utils import timezone
+from django.contrib.auth import get_user_model
+from django.db import transaction
 from rest_framework import serializers
 
 from social_media.models import UserProfile, Post, Comment, PostponedPost
@@ -6,6 +7,7 @@ from social_media.models import UserProfile, Post, Comment, PostponedPost
 
 class UserProfileSerializer(serializers.ModelSerializer):
     user = serializers.EmailField(source="user.email", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
     follower_count = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -18,7 +20,7 @@ class UserProfileCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ["id", "user", "username", "bio", "profile_picture"]
+        fields = ["id", "user", "bio", "profile_picture"]
 
     def create(self, validated_data: dict) -> UserProfile:
 
@@ -29,25 +31,36 @@ class UserProfileCreateSerializer(serializers.ModelSerializer):
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
-
+    username = serializers.CharField(source="user.username")
     profile_picture = serializers.ImageField(required=False)
 
     class Meta:
         model = UserProfile
         fields = ["id", "username", "bio", "profile_picture"]
 
+    def update(self, instance: UserProfile, validated_data: dict) -> UserProfile:
+        with transaction.atomic():
+            user = instance.user
+            user_data = validated_data.pop("user", None)
+            if user_data is not None:
+                user.username = user_data.get("username", user.username)
+                user.save()
 
-class UserProfileSortSerializer(serializers.ModelSerializer):
+            return super().update(instance, validated_data)
+
+
+class UserProfileShortSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
         model = UserProfile
         fields = ["id", "username"]
 
-        read_only_fields = ["id", "username"]
-
 
 class PostSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source="user_profile.username", read_only=True)
+    username = serializers.CharField(
+        source="user_profile.user.username", read_only=True
+    )
     count_likes = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -64,7 +77,9 @@ class PostCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source="user_profile.username", read_only=True)
+    username = serializers.CharField(
+        source="user_profile.user.username", read_only=True
+    )
 
     class Meta:
         model = Comment

@@ -1,9 +1,6 @@
-import json
-import uuid
 from typing import Type, Any
 
 from django.db.models import QuerySet, Count, Q
-from django_celery_beat.models import ClockedSchedule, PeriodicTask
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, status, mixins, generics
@@ -22,7 +19,7 @@ from social_media.serializers import (
     UserProfileSerializer,
     UserProfileCreateSerializer,
     UserProfileUpdateSerializer,
-    UserProfileSortSerializer,
+    UserProfileShortSerializer,
     PostSerializer,
     PostCreateUpdateSerializer,
     CommentSerializer,
@@ -55,7 +52,7 @@ class UserProfileViewSet(
 
         query_username = self.request.query_params.get("username")
         if query_username:
-            profile_qs = profile_qs.filter(username=query_username)
+            profile_qs = profile_qs.filter(user__username=query_username)
 
         return profile_qs
 
@@ -165,7 +162,7 @@ class UserManageApiView(generics.RetrieveUpdateDestroyAPIView):
 
 class FollowerApiView(generics.ListAPIView):
     permission_classes = [HasUserProfile]
-    serializer_class = UserProfileSortSerializer
+    serializer_class = UserProfileShortSerializer
 
     def get_queryset(self) -> QuerySet:
         follower_qs = self.request.user.profile.followers.all()
@@ -178,7 +175,7 @@ class FollowerApiView(generics.ListAPIView):
 
 class FollowingApiView(generics.ListAPIView):
     permission_classes = [HasUserProfile]
-    serializer_class = UserProfileSortSerializer
+    serializer_class = UserProfileShortSerializer
 
     def get_queryset(self) -> QuerySet:
         follower_qs = self.request.user.profile.followings.all()
